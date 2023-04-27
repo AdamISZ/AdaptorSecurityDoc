@@ -359,7 +359,7 @@ We now describe the reduction to ECDLP based on a more sophisticated version of 
 \vspace{5 pt}
 
 \begin{enumerate}
-\item The challenger gives us a point $Q$. We set $R_{j,1} := Q$ .
+\item The challenger gives us a point $Q$. We set $R_{1,1} := Q$ .
 \item All parties can run \textbf{KeySetup} for MuSig to agree on $P_{agg,q}$ for all $m$ signing sessions (indexed by $q$).
 \item We, as party $p_1$, along with $\mathbb{A}_2$, as all other parties, in \textbf{only the first signing context}, run \textbf{Sign1Check} and \textbf{Sign2Check} resulting in  $R_{agg,1}$ as usual.
 \item We now \emph{forge} a signature adaptor \emph{for signing context 1} as in 6.4.2: first, choose $\sigma'_{1,1}$ at random. Then calculate $T_1 = R_{1,1} + \mathbb{H}(R_{agg,1}|P_{agg,1}|m_1)P_{1,1} - \sigma'_{1,1} G$. At this point, the value (shared across signing sessions) of $T_1$ is set.
