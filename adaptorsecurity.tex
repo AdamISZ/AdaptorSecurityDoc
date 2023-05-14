@@ -41,7 +41,7 @@
 \author{Status: DRAFT}
 \begin{document}
 
-\title{A short note on signature adaptor security}
+\title{Security of signature adaptors in parallel}
 \maketitle
 
 \section{Overview}
@@ -50,11 +50,11 @@ In this note, we give a definition of a ``signature adaptor'' (first defined by 
 
 \vspace{5 pt}
 
-We then state formally the security properties of this ``toy'' construction, before explaining why it is practically useless. Nevertheless, this forms the basis of the remainder.
+We then (after reviewing earlier work on this question), state formally the security properties of this construction.
 
 \vspace{5 pt}
 
-Next we explain how such a ``signature adaptor'' can be incorporated into a 3-round MuSig {[}\protect\hyperlink{anchor-2}{2}{]} protocol (\textbf{note}: all references to MuSig from now on refer to the construction in that paper; in particular, not MuSig2 {[}\protect\hyperlink{anchor-3}{3}{]}). for signing over an aggregated key ($P_{agg}$), and explain how its security properties relate to the previous case.
+Next we explain how such a ``signature adaptor'' can be incorporated into a 3-round MuSig {[}\protect\hyperlink{anchor-2}{2}{]} protocol (\textbf{note}: all references to MuSig from now on, in this draft of this paper, refer to the construction in \emph{that} paper, and more particularly, \emph{not} to MuSig2 {[}\protect\hyperlink{anchor-3}{3}{]}). for signing over an aggregated key ($P_{agg}$), and explain how its security properties relate to the previous case.
 
 \vspace{5 pt}
 
@@ -62,7 +62,7 @@ Then, we address the scenario of the use of multiple signature adaptors  \emph{c
 
 \vspace{5 pt}
 
-This last analysis is useful because it applies to the most well known constructions that require signature adaptors, namely the adaptor based CoinSwap {[}\protect\hyperlink{anchor-14}{14}{]} {[}\protect\hyperlink{anchor-15}{15}{]}, as well as more exotic versions like ``Multiparty S6'' {[}\protect\hyperlink{anchor-6}{6}{]}.
+This last analysis is useful because it applies to the most well known constructions that require signature adaptors, namely the adaptor based CoinSwap {[}\protect\hyperlink{anchor-14}{14}{]} {[}\protect\hyperlink{anchor-15}{15}{]}, anonymous multi-hop locks {[}\protect\hyperlink{anchor-16}{16}{]} as well as more exotic versions like ``Multiparty S6'' {[}\protect\hyperlink{anchor-6}{6}{]}.
 
 \section{Notation}
 
@@ -83,6 +83,10 @@ Before going on to our base definitions, which set the stage for our set of secu
 As far as we know, the first formal treatments of the security properties of signature adaptors were found in Fournier {[}\protect\hyperlink{anchor-13}{13}{]} and in Aumayr et al. {[}\protect\hyperlink{anchor-9}{9}{]}. Focusing first on the latter, the concept of aEUF-CMA security is defined in terms of an adversary with access to a normal signing oracle as well as an adaptor signing oracle. Definition 1 of that paper argues for unforgeability in terms of this adversary, who is given a single adaptor on the message to be forged. We would claim that this definition is a little too weak, since it is more interesting to consider the case where the adversary has access to \emph{multiple} signature adaptors on the \emph{one} message for which a full signature forgery is to be produced. As a critique of the model, this is debatable, however this point is at the heart of what is discussed in the rest of this paper. 
 
 \vspace{5 pt}
+
+TODO: Include reference to the newer Wei Dai paper.
+
+\vspace{5 pt}
 This same security model was also adopted for work on payment channels in {[}\protect\hyperlink{anchor-12}{12}{]}. Many of these papers need a generic construction, not specific to Schnorr, not least because they consider the possibility of instantiating signature adaptors using the ECDSA instead of the Schnorr primitive - a setup which is substantially more cryptographically complex.
 
 \vspace{5 pt}
@@ -94,9 +98,9 @@ A closely related point is made by Fournier in {[}\protect\hyperlink{anchor-13}{
 
 \vspace{5 pt}
 
-In 'Two Party Adaptor Signatures' by Erwig et. al. {[}\protect\hyperlink{anchor-10}{10}{]}, the model of {[}\protect\hyperlink{anchor-9}{9}{]} is extended, considering how the same model can apply to any signature scheme derived from an ID protocol. It makes the insightful note that such signature adaptors are by definition impossible in unique signature schemes such as BLS {[}\protect\hyperlink{anchor-11}{11}{]}. This paper also formally extends the model to a multiparty signing context, which we argue in this paper is the only one of interest, but uses a KOSK (``knowledge of secret key'') model, different from that in MuSig and MuSig2, referenced above.
+In 'Two Party Adaptor Signatures' by Erwig et. al. {[}\protect\hyperlink{anchor-10}{10}{]}, the model of {[}\protect\hyperlink{anchor-9}{9}{]} is extended, considering how the same model can apply to any signature scheme derived from an ID protocol. It makes the insightful note that such signature adaptors are by definition impossible in unique signature schemes such as BLS {[}\protect\hyperlink{anchor-11}{11}{]} (a point also briefly noted by Fournier in his paper). This paper also formally extends the model to a multiparty signing context, as we focus on here, but uses a KOSK (``knowledge of secret key'') model, different from that in MuSig and MuSig2, referenced above.
 
-\section{Single key signature adaptor for BIP340 Schnorr (useless)}
+\section{Single key signature adaptor for BIP340 Schnorr}
 
 Given the definitions in BIP340 for public key $P$, message $m$, private key (here $x$) and signature $(R, \sigma)$ we define a ``signature adaptor'' creation algorithm \textbf{AdaptorCreate} which takes as input a scalar $t \in \mathbb{Z}_N$, a key $P$, a message $m$, and a signature $(R, \sigma)$ as defined above, and outputs a ``signature adaptor'', which is a tuple: $(R, \sigma', T)$.
 
@@ -125,7 +129,15 @@ $$ \sigma'G \stackrel{?}{=} R - T + \mathbb{H}(R||P||m)P$$
 
 \vspace{5 pt}
 
-If the above definition looks wrong, please refer to the last paragraph of Section 5.
+If the above definition looks wrong, note the following:
+
+\vspace{5pt}
+
+The reader may be more familiar with the equivalent definition of ``signature adaptor'': $\sigma^{'} = k + \mathbb{H}(R + T||P||m)x$, for point $T$. The subtraction version given here is equivalent but a little easier to reason about, since the ``tweak'' which $T$ constitutes, now appears only \emph{outside} a hash function. To see the equivalence, redefine $R' = R + T$ so that $R = R + T$ and thus $\sigma G = R' - T + \mathbb{H}(R||P||m)P$.
+
+\vspace{5pt}
+
+This equivalence can be illustrated by the following task: suppose you want to create a signature adaptor on your private key $x$ and message $m$, for a point $T$ for which you don't have a discrete log. In the ``other'' formalism, where $\sigma^{'} = k + \mathbb{H}(R + T||P||m)x$, you would do this calculation directly, as it only requires $T$, not $t$. For this new formalism, you would have to choose a random $k_2$, and then define: $k_2 = k - t$, so that $R = R_2 + T$; then you can calculate $\sigma' = k_2 + H(R||P||m)x$ and return ($R, \sigma', t$) as your adaptor. Thus, when a counterparty reveals a signature by publishing $\sigma = \sigma' + t$, you can retrieve the previously unknown secret $t$ by subtraction.
 
 \subsection{Claim 1}
 
@@ -226,9 +238,7 @@ The two non-vanilla Schnorr verifications $\mathbb{V}_p$, $\mathbb{V}_a$ have lo
 \item $\mathbb{V}_a$ takes, as input $((T_j, \sigma_j'), j)$, outputs accept/reject. 
 \end{itemize}
 
-\vspace{5pt}
 
-The reader may be more familiar with the equivalent definition of ``signature adaptor'': $\sigma_j^{'} = k_j + \mathbb{H}(R_{agg} + T_j||P_{agg}||m)P_j$, for point $T_j$. The subtraction version given here is equivalent but a little easier to reason about, since the ``tweak'' which $T$ constitutes, now appears only \emph{outside} a hash function. To see the equivalence, redefine, for participant $j$, $R'_j = R_j + T_j$ as the generating step before \textbf{Sign1Check}, so that $R_{agg} = \sum_k R_k + T_j$ and thus $V_a$ passes since $\sigma_j G = R'_j - T_j + \mathbb{H}(R_{agg}||P_{agg}||m)P_j$.
 
 \section{Security Properties}
 
@@ -432,6 +442,10 @@ Each party in a (set of) signing session(s) needs the security property that the
 \item
   \protect\hypertarget{anchor-15}{}{}Adaptor signatures, summary by Bitcoin OpTech
   \url{https://bitcoinops.org/en/topics/adaptor-signatures/}
+\item
+  \protect\hypertarget{anchor-16}{}{}Anonymous Multi-Hop Locks
+  \url{https://eprint.iacr.org/2018/472}
+ 
   
   
 \end{enumerate}
